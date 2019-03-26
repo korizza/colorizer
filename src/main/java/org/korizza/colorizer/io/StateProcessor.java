@@ -14,23 +14,13 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class StateProcessor {
     private static final Logger log = Logger.getLogger(StateProcessor.class);
-
-    private static long TIMER_DELAY_SEC = 2000L;
-
-    private final ExecutorService renderEventPool;
-    private Timer timer;
-    private final ReadWriteLock stateLock;
-
-    private final Document document;
-    private final StyledDocument styledDocument;
-    private final RangeMap<Integer, Integer> taskRanges;
-    private int taskId;
 
     private enum State {
         READY,
@@ -43,11 +33,23 @@ public class StateProcessor {
         TIME_EXPIRED,
     }
 
+    private static long TIMER_DELAY_SEC = 500L;
+
+    private final ExecutorService renderEventPool;
+    private Timer timer;
+    private final ReadWriteLock stateLock;
+
+    private final Document document;
+    private final StyledDocument styledDocument;
+    private final RangeMap<Integer, Integer> taskRanges;
+    private int taskId;
+
     private State state = State.READY;
 
     private int startOff = 0;
     private int blockLength = 0;
 
+    private final AtomicBoolean needClosing;
 
     public StateProcessor(Document document, StyledDocument styledDocument) {
         this.document = document;
@@ -56,13 +58,19 @@ public class StateProcessor {
         stateLock = new ReentrantReadWriteLock();
         taskRanges = TreeRangeMap.create();
         taskId = 0;
+        needClosing = new AtomicBoolean(false);
     }
 
     public void close() {
+        if (needClosing.compareAndSet(true, false)) {
+            return;
+        }
+
+        needClosing.set(true);
+
         try {
             renderEventPool.shutdown();
             renderEventPool.awaitTermination(5, TimeUnit.SECONDS);
-
         } catch (InterruptedException e) {
             log.error(e.getMessage());
         } finally {
@@ -116,7 +124,7 @@ public class StateProcessor {
                 try {
                     stateLock.readLock().lock();
                     Integer lastSymbolTask = taskRanges.get(x);
-                    return (lastSymbolTask == null || !lastSymbolTask.equals(y)) ? 1 : 0;
+                    return (needClosing.compareAndSet(true, false) || lastSymbolTask == null || !lastSymbolTask.equals(y)) ? 1 : 0;
                 } finally {
                     stateLock.readLock().unlock();
                 }
@@ -124,8 +132,6 @@ public class StateProcessor {
 
             taskRanges.put(Range.closed(offset, offset + lenght), task.getId());
             renderEventPool.submit(() -> {
-                log.debug(text);
-                log.debug(String.format("offset: %d, lenght: %d", offset, lenght));
                 task.run();
             });
         } catch (BadLocationException e1) {
@@ -135,6 +141,10 @@ public class StateProcessor {
     }
 
     private void processState(EventType et, DocumentEvent e) {
+        if (needClosing.compareAndSet(true, false)) {
+            return;
+        }
+
         stateLock.writeLock().lock();
         try {
             switch (state) {

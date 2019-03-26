@@ -1,7 +1,5 @@
 package org.korizza.colorizer.demo;
 
-import org.korizza.colorizer.io.StateProcessor;
-
 import javax.swing.*;
 
 public class App {
@@ -12,7 +10,14 @@ public class App {
         ui.setVisible(true);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+        final long start = System.nanoTime();
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            public void run() {
+                System.out.format("HOOKED");
+            }
+        }));
+
         SwingUtilities.invokeLater(() -> {
             App app = new App();
         });

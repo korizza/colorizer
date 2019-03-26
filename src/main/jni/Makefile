@@ -5,7 +5,7 @@ colorizer_native.so : colorizer_native.obj
 	cp bin/libcolorizer.so ../resources/native/libcolorizer.so
 
 colorizer_native.obj: colorizer_native.cpp jni_headers
-	g++ -O0 -o bin/libcolorizer.o -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -fpic -c colorizer_native.cpp
+	g++ -O3 -o bin/libcolorizer.o -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -fpic -c colorizer_native.cpp
 
 jni_headers: java_class_files
 	javah -jni -o colorizer_native.h -classpath bin org.korizza.colorizer.io.ColorizerNative

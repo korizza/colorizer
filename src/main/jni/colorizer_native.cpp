@@ -14,8 +14,8 @@ JNIEXPORT jboolean JNICALL Java_org_korizza_colorizer_io_ColorizerNative_test
 }
 
 
-JNIEXPORT jintArray JNICALL Java_org_korizza_colorizer_io_ColorizerTask_colorize
-  (JNIEnv *env, jobject obj, jstring text)
+JNIEXPORT jintArray JNICALL Java_org_korizza_colorizer_io_ColorizerNative_colorize
+		(JNIEnv *env, jobject obj, jstring text)
 {
 
 	if (!text) {

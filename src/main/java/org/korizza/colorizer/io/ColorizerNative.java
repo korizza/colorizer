@@ -40,7 +40,7 @@ public class ColorizerNative {
     }
 
     public boolean isCanceled(int idx) {
-        return funcIsCanfeled.apply(idx) == 0;
+        return funcIsCanfeled.apply(idx) == 1;
     }
 
     public native int[] colorize(String text);

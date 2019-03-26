@@ -40,18 +40,15 @@ public class ColorizerTask {
 
     public void run() {
         try {
-            log.debug("Start calculating colors");
             final int[] colors = colorizerNative.colorize(text);
-            log.debug("End calculating colors");
             SwingUtilities.invokeLater(() -> {
-                log.debug("Started colorizing");
                 int curOffset = offset;
                 MutableAttributeSet attributes = new SimpleAttributeSet();
                 for (int c : colors) {
                     Color newColor = new Color(c);
-                    StyleConstants.FontConstants.setForeground(attributes, Color.blue);
+                    StyleConstants.FontConstants.setForeground(attributes, newColor);
                     document.setCharacterAttributes(curOffset++, 1, attributes, true);
-                    log.debug(String.format("Colorized at %d to color %d", curOffset-1));
+                    log.debug(String.format("Colorized at %d to color %d", curOffset-1, c));
                 }
             });
 

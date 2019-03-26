@@ -29,7 +29,7 @@ void highlight(std::vector<char> const& text, std::function<bool()> const& isCan
 
 
     if (std::rand() % 30000 == 0) {
-      // std::terminate();
+      std::terminate();
     }
 
     if (std::isdigit(c))

@@ -3,6 +3,7 @@ package org.korizza.colorizer.demo;
 import org.korizza.colorizer.ui.ColorizedTextPane;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -16,12 +17,12 @@ public class UI extends JFrame implements ActionListener {
 
 
     // frame title
-    private static final String FRAME_TITLE = "StateProcessor";
+    private static final String FRAME_TITLE = "Colorizer";
 
     // ctor
     UI() {
 
-        // create text area
+        // create text pane
         textPane = new ColorizedTextPane();
         addWindowListener(textPane.getWindowAdapter());
         scrollPane = new JScrollPane(textPane);
@@ -32,6 +33,8 @@ public class UI extends JFrame implements ActionListener {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle(FRAME_TITLE);
 
+        Font font = new Font("Serif", Font.PLAIN, 17);
+        setFont(font);
     }
 
     // action handler
