@@ -62,7 +62,7 @@ public class StateProcessor {
     }
 
     public void close() {
-        if (needClosing.compareAndSet(true, false)) {
+        if (needClosing.get()) {
             return;
         }
 
@@ -124,7 +124,7 @@ public class StateProcessor {
                 try {
                     stateLock.readLock().lock();
                     Integer lastSymbolTask = taskRanges.get(x);
-                    return (needClosing.compareAndSet(true, false) || lastSymbolTask == null || !lastSymbolTask.equals(y)) ? 1 : 0;
+                    return (needClosing.get() || lastSymbolTask == null || !lastSymbolTask.equals(y)) ? 1 : 0;
                 } finally {
                     stateLock.readLock().unlock();
                 }
@@ -141,7 +141,7 @@ public class StateProcessor {
     }
 
     private void processState(EventType et, DocumentEvent e) {
-        if (needClosing.compareAndSet(true, false)) {
+        if (needClosing.get()) {
             return;
         }
 
