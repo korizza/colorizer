@@ -1,31 +1,19 @@
 package org.korizza.colorizer.io;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
+import org.apache.log4j.Logger;
+
 import java.util.function.UnaryOperator;
 
 public class ColorizerNative {
+    private static final Logger log = Logger.getLogger(ColorizerTask.class);
+
     static {
-        URL url = ColorizerNative.class.getResource("/native/libcolorizer.so");
+        log.debug("java.library.path: " + System.getProperty("java.library.path"));
         try {
-            File tmpDir = Files.createTempDirectory("colorizer").toFile();
-            tmpDir.deleteOnExit();
-
-            File nativeLibTmpFile = new File(tmpDir, "libcolorizer.so");
-            nativeLibTmpFile.deleteOnExit();
-
-            try (InputStream in = url.openStream()) {
-                Files.copy(in, nativeLibTmpFile.toPath());
-                System.load(nativeLibTmpFile.getAbsolutePath());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            System.loadLibrary("colorizer");
+        } catch (Error | Exception e) {
+            log.error("Failed to load JNI colorizer library: ", e);
         }
     }
 

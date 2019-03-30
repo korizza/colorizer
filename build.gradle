@@ -2,51 +2,132 @@
 plugins {
     id 'java'
     id 'groovy'
+    id 'cpp'
+    id 'application'
 }
 
 group 'org.korizza.colorizer'
 version '1.0'
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
 }
 
-task makeNativeObj(type: Exec) {
-    workingDir './src/main/jni'
-    commandLine 'make'
-}
-classes.dependsOn(makeNativeObj)
-
-task cleanJniBuild(type: Exec) {
-    workingDir './src/main/jni'
-    commandLine 'make', 'clean'
-}
-clean.dependsOn(cleanJniBuild)
-
-task makeJniHeaders(type: Exec) {
-    workingDir './src/main/jni'
-    commandLine 'make', 'jni_headers'
+wrapper {
+    gradleVersion = '5.2.1'
 }
 
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'org.korizza.colorizer.demo.App'
-        )
+def OS = System.properties['os.name'].toString().toLowerCase()
+
+println "Building on OS: " + System.properties['os.name']
+println "Using JDK: " + System.properties['java.home']
+
+def MAIN_CLASS_NAME = 'org.korizza.colorizer.demo.App'
+def SYS_INCLUDE_DIR = this.properties['system.include.dir']
+def SYS_LOCAL_INCLUDE_DIR = this.properties['system.local.include.dir']
+def JNI_INCLUDE_DIR = System.getenv("JAVA_HOME") + '/include'
+
+println "Using system include directory: " + SYS_INCLUDE_DIR
+println "Using system local include directory: " + SYS_LOCAL_INCLUDE_DIR
+println "Using JNI include directory: " + JNI_INCLUDE_DIR
+
+application {
+    mainClassName = MAIN_CLASS_NAME
+    applicationDefaultJvmArgs = ['-Djava.library.path=../lib']
+    applicationDistribution.into("lib") { from "./build/libs/colorizer/shared/release/" }
+}
+
+model {
+    components {
+        colorizer(NativeLibrarySpec) {
+            sources {
+                cpp {
+                    source {
+                        srcDir 'src/main/jni'
+                        include "**/*.cpp"
+                    }
+                }
+            }
+            buildTypes {
+                debug
+                release
+            }
+        }
     }
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }        
+    toolChains {
+        gcc(Gcc) {
+            eachPlatform {
+                if (OS.indexOf("win") >= 0) {
+                    cppCompiler.withArguments { args ->
+                        args << "-O2"
+                        args << "-I" + SYS_INCLUDE_DIR
+                        args << "-I" + SYS_LOCAL_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR + "/win32"
+                        args << "-std=c++14"
+                    }
+                    linker.withArguments { args ->
+                        args << "-O2"
+                        args << "-lc++"
+                    }
+                } else if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 ) {
+                    cppCompiler.withArguments { args ->
+                        args << "-O2"
+                        args << "-I" + SYS_INCLUDE_DIR
+                        args << "-I" + SYS_LOCAL_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR + "/linux"
+                        args << "-std=c++14"
+                    }
+                    linker.withArguments { args ->
+                        args << "-O2"
+                        args << "-lstdc++"
+                    }
+                }
+            }
+        }
+        clang(Clang) {
+            eachPlatform {
+                if (OS.indexOf("win") >= 0) {
+                    cppCompiler.withArguments { args ->
+                        args << "-O2"
+                        args << "-I" + SYS_INCLUDE_DIR
+                        args << "-I" + SYS_LOCAL_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR + "/darwin"
+                        args << "-std=c++14"
+                    }
+                    linker.withArguments { args ->
+                        args << "-O2"
+                        args << "-lc++"
+                    }
+                } else if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 ) {
+                    cppCompiler.withArguments { args ->
+                        args << "-O2"
+                        args << "-I" + SYS_INCLUDE_DIR
+                        args << "-I" + SYS_LOCAL_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR
+                        args << "-I" + JNI_INCLUDE_DIR + "/linux"
+                        args << "-std=c++14"
+                    }
+                    linker.withArguments { args ->
+                        args << "-O2"
+                        args << "-lstdc++"
+                    }
+                }
+            }
+        }
     }
-    baseName = project.name
 }
-
 
 dependencies {
     compile group: 'log4j', name: 'log4j', version: '1.2.17'    
     compile group: 'com.google.guava', name: 'guava', version: '23.3-jre'
+
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-
+installDist.dependsOn(build)
