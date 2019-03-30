@@ -97,7 +97,7 @@ model {
                         args << "-I" + SYS_INCLUDE_DIR
                         args << "-I" + SYS_LOCAL_INCLUDE_DIR
                         args << "-I" + JNI_INCLUDE_DIR
-                        args << "-I" + JNI_INCLUDE_DIR + "/darwin"
+                        args << "-I" + JNI_INCLUDE_DIR + "/win32"
                         args << "-std=c++14"
                     }
                     linker.withArguments { args ->
