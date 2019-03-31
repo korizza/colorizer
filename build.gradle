@@ -123,6 +123,10 @@ model {
     }
 }
 
+test {
+    systemProperty 'java.library.path', 'build/libs/colorizer/shared/debug'
+}
+
 dependencies {
     compile group: 'log4j', name: 'log4j', version: '1.2.17'    
     compile group: 'com.google.guava', name: 'guava', version: '23.3-jre'
